@@ -1,0 +1,379 @@
+import sqlite3 
+import pyfiglet
+from colorama import Fore, Style, init
+import matplotlib.pyplot as plt
+
+init(autoreset=True)
+
+conn = sqlite3.connect("colegio.db")
+cursor = conn.cursor()
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS alumno (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    edad INTEGER
+    )
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS curso (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    profesor TEXT,
+    cupo INTEGER
+    )
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS inscripcion(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alumno_id INTEGER,
+    curso_id INTEGER,
+    nota INTEGER,
+    FOREIGN KEY (alumno_id) REFERENCES alumno (id),
+    FOREIGN KEY (curso_id) REFERENCES curso (id)
+    )
+''')
+
+
+
+class Alumno:
+    def __init__ (self, id, nombre, edad,):
+        self.id = id
+        self.nombre = nombre
+        self.edad = edad
+
+
+    def registrar(self):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO alumno (nombre, edad) VALUES (?, ?)", (self.nombre, self.edad))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def obtener_todos():
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, nombre, edad FROM alumno")
+        filas = cursor.fetchall()
+        conn.close()
+        return [Alumno (*fila) for fila in filas]
+    
+    @staticmethod
+    def eliminar_por_nombre(nombre):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM alumno WHERE nombre = ?", (nombre, ))
+        conn.commit()
+        conn.close()
+
+
+
+class Curso:
+    def __init__ (self, id, nombre, profesor, cupo):
+        self.id = id
+        self.nombre = nombre
+        self.profesor = profesor
+        self.cupo = cupo
+
+    def registrar(self):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO curso (nombre, profesor, cupo) VALUES (?, ?, ?)", (self.nombre, self.profesor, self.cupo))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def curso_cupo_mayor_promedio():
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT AVG(cupo) FROM curso")
+        promedio = cursor.fetchone()[0]
+        cursor.execute("SELECT id, nombre, profesor, cupo FROM curso WHERE cupo > ?",(promedio))
+        filas = cursor.fetchall()
+        conn.close()
+        return [Curso (*fila) for fila in filas] 
+    
+    @staticmethod
+    def modificar_nombre(id_curso, nuevo_nombre):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE curso SET nombre = ? WHERE id = ?", (nuevo_nombre, id_curso))
+        conn.commit()
+        conn.close()
+
+class Inscripcion:
+    def __init__ (self, id, alumno_id, curso_id, nota):
+        self.id = id
+        self.alumno_id = alumno_id
+        self.curso_id = curso_id
+        self.nota = nota
+
+    def registrar(self):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO inscripcion (alumno_id, curso_id, nota) VALUES (?, ?, ?)", (self.alumno_id, self.curso_id, self.nota))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def notas_por_nombre(nombre):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT inscripcion.nota
+            FROM inscripcion JOIN alumno ON alumno.id = inscripcion.alumno_id
+            WHERE alumno.nombre = ?
+            ''',(nombre))
+        
+        notas = [fila[0] for fila in cursor.fetchall()]
+        return notas    
+
+    @staticmethod
+    def alumnos_en_curso(id_curso):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT alumno.id, alumno.nombre, alumno.edad
+            FROM inscripcion
+            JOIN alumno ON alumno.id = inscripcion.alumno_id 
+            WHERE inscripcion.curso_id = ?
+            ''',(id_curso))
+        filas = cursor.fetchall()
+        
+        return [Alumno(*fila) for fila in filas]
+
+    @staticmethod
+    def cursos_de_alumnos(nombre):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT curso.id, curso.nombre, curso.profesor, curso.cupo FROM inscripcion
+            JOIN alumno ON alumno.id = inscripcion.alumno_id
+            JOIN curso ON curso.id = inscripcion.curso_id
+            WHERE alumno.nombre = ?
+            ''', (nombre)) 
+        filas = cursor.fetchall()
+        conn.close()
+        
+        return [Curso(*fila) for fila in filas]
+
+    @staticmethod
+    def nota_mas_alta_por_curso():
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT curso.nombre, MAX(inscripcion.nota) 
+            FROM inscripcion
+            JOIN curso ON curso.id = inscripcion.curso_id
+            GROUP BY curso.id
+        ''')
+        datos = cursor.fetchall()
+        conn.close()
+        return datos
+
+    @staticmethod
+    def actualizar_nota(alumno_id, curso_id, nueva_nota):
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+                    UPDATE inscripcion
+                    SET nota = ?
+                    WHERE alumno_id = ? AND curso_id = ?
+                    ''', (nueva_nota, alumno_id, curso_id))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def promedio_notas_por_curso():
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT curso.nombre, AVG(inscripcion.nota)
+            FROM inscripcion
+            JOIN curso ON curso.id = inscripcion.curso_id
+            GROUP BY curso.id
+            ''')
+        resultados = cursor.fetchall()
+        conn.close()
+        return resultados
+
+    @staticmethod
+    def mejor_promedio():
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT alumno.nombre, AVG(inscripcion.nota) as promedio
+            FROM inscripcion
+            JOIN alumno ON alumno.id = inscripcion.alumno_id
+            GROUP BY alumno.id
+            ORDER BY promedio DESC
+            LIMIT 1
+        ''')
+        resultado = cursor.fetchone()
+        conn.close()
+        return resultado
+
+def pausa():
+    input("\nPresiona ENTER para volver al menu...")
+
+
+def mostrar_banner():
+    banner = pyfiglet.figlet_format("Sistema Colegio")
+    print(Fore.CYAN + Style.BRIGHT + banner)
+    print(Fore.GREEN + Style.BRIGHT + "Bienvenido al sistema académico\n")
+
+
+if __name__ == "__main__":
+    def menu_principal():
+        while True:
+            print(Fore.YELLOW + "------ MENÚ PRINCIPAL ------")
+            print(Fore.CYAN + "1) Registrar alumno")
+            print(Fore.CYAN + "2) Listar alumnos")
+            print(Fore.CYAN + "3) Registrar curso")
+            print(Fore.CYAN + "4) Listar cursos")
+            print(Fore.CYAN + "5) Inscribir alumno en curso")
+            print(Fore.CYAN + "6) Mostrar notas de un alumno")
+            print(Fore.CYAN + "7) Mostrar alumnos de un curso")
+            print(Fore.CYAN + "8) Mostrar cursos de un alumno")
+            print(Fore.CYAN + "9) Reporte: nota más alta por curso")
+            print(Fore.CYAN + "10) Actualizar nota de alumno en un curso")
+            print(Fore.CYAN + "11) Promedio de notas por curso")
+            print(Fore.CYAN + "12) Alumno con mejor promedio")
+            print(Fore.RED + "0) Salir")
+
+            opcion = input(Fore.YELLOW + "Elige una opción: ").strip()
+
+            if opcion == "1":
+                nombre = input("Nombre: ").strip()
+                edad = int(input("Edad: ").strip())
+                a = Alumno(None, nombre, edad)
+                a.registrar()
+                print("Alumno registrado.")
+                pausa()
+
+
+            elif opcion == "2":
+                alumnos = Alumno.obtener_todos()
+                for a in alumnos:
+                    print(a.id, a.nombre, a.edad)
+                pausa()
+
+
+            elif opcion == "3":
+                nombre = input("Nombre del curso: ").strip()
+                profesor = input("Profesor: ").strip()
+                cupo = int(input("Cupo: ").strip())
+                c = Curso(None, nombre, profesor, cupo)
+                c.registrar()
+                print("Curso registrado.")
+                pausa()
+
+
+            elif opcion == "4":
+                conn = sqlite3.connect("colegio.db")
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, nombre, profesor, cupo FROM curso")
+                cursos = cursor.fetchall()
+                conn.close()
+                if cursos:
+                    print("\n--- Lista de cursos ---")
+                    for c in cursos:
+                        print(f"ID: {c[0]} | Nombre: {c[1]} | Profesor: {c[2]} | Cupo: {c[3]}")
+                else:
+                    print("No hay cursos registrados.")
+                pausa()
+
+
+            elif opcion == "5":
+                alumno_id = int(input("ID del alumno: ").strip())
+                curso_id = int(input("ID del curso: ").strip())
+                nota = int(input("Nota: ").strip())
+                ins = Inscripcion(None, alumno_id, curso_id, nota)
+                ins.registrar()
+                print("Inscripción registrada.")
+                pausa()
+
+
+            elif opcion == "6":
+                nombre = input("Nombre del alumno: ").strip()
+                notas = Inscripcion.notas_por_nombre(nombre)
+                print("Notas de", nombre, ":", notas)
+                pausa()
+
+
+            elif opcion == "7":
+                curso_id = int(input("ID del curso: ").strip())
+                alumnos = Inscripcion.alumnos_en_curso(curso_id)
+                for a in alumnos:
+                    print(a.id, a.nombre, a.edad)
+                pausa()
+
+
+            elif opcion == "8":
+                nombre = input("Nombre del alumno: ").strip()
+                cursos = Inscripcion.cursos_de_alumnos(nombre)
+                for c in cursos:
+                    print(c.id, c.nombre, c.profesor, c.cupo)
+                pausa()
+
+
+            elif opcion == "9":
+                reporte = Inscripcion.nota_mas_alta_por_curso()
+                for r in reporte:
+                    print("Curso:", r[0], "- Nota más alta:", r[1])
+                pausa()
+
+
+            elif opcion == "10":
+                alumno_id = int(input("ID del alumno: ").strip())
+                curso_id = int(input("ID del curso: ").strip())
+                nueva_nota = int(input("Nueva nota: ").strip())
+                Inscripcion.actualizar_nota(alumno_id, curso_id, nueva_nota)
+                print("Nota actualizada correctamente.")
+                pausa()
+
+
+            elif opcion == "11":
+                for nombre_curso, promedio in Inscripcion.promedio_notas_por_curso():
+                    print(f"Curso: {nombre_curso} - Promedio: {promedio:.2f}")
+                pausa()
+
+            elif opcion == "12":
+                mejor = Inscripcion.mejor_promedio()
+                if mejor:
+                    print(f"Alumno: {mejor[0]} - Promedio: {mejor[1]:.2f}")
+                else:
+                    print("No hay inscripciones registradas.")
+                pausa()
+
+
+            elif opcion == "0":
+                print("Saliendo del sistema...")
+                break
+
+            else:
+                print("Opción inválida, intenta de nuevo.")
+
+
+    def safe_execute(query, params=()):
+        try:
+            conn = sqlite3.connect("colegio.db")
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            conn.commit()
+            result = cursor.fetchall()
+            conn.close()
+            return result
+        except Exception as e:
+            print("Error en la base de datos:", e)
+            return[]
+        
+    def pedir_entero(mensaje):
+        while True:
+            try:
+                return int(input(mensaje).strip())
+            except ValueError:
+                print("Por favor ingrese un numero valido.")
