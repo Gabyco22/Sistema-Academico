@@ -15,8 +15,7 @@ Un sistema de gestión académica desarrollado en **Python + SQLite**, que permi
 ## Instalación
 1. Clonar el repositorio:
    ```bash
-   
-https://github.com/Gabyco22/Sistema-Academico.git
+   https://github.com/Gabyco22/Sistema-Academico.git
 
 ## Instalación de dependencias
 pip install -r requirements.txt
