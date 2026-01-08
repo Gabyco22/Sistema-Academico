@@ -19,3 +19,17 @@ Un sistema de gestión académica desarrollado en **Python + SQLite**, que permi
 
 ## Instalación de dependencias
 pip install -r requirements.txt
+
+
+## Ideas Futuras de este programador
+- Interfaz gráfica con Tkinter o PyQt
+- Exportar reportes a PDF/Excel
+- Sistema de login para profesores y alumnos
+- Dashboard web con Flask/Django
+
+Autor
+- Soy Gabriel, un programador novato pero con hambre de aprender y conocer mucho más de este mundo.
+- Mi objetivo es trabajar con mis conocimientos en programación para ayudar al crecimiento de las empresas.
+
+Actualmente estoy desarrollando proyectos en Python y SQL, enfocados en bases de datos, visualización y experiencia de usuario.
+
