@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 
 init(autoreset=True)
 
+
+
+
 conn = sqlite3.connect("colegio.db")
 cursor = conn.cursor()
 
@@ -104,6 +107,9 @@ class Curso:
         conn.commit()
         conn.close()
 
+
+
+
 class Inscripcion:
     def __init__ (self, id, alumno_id, curso_id, nota):
         self.id = id
@@ -144,6 +150,7 @@ class Inscripcion:
         filas = cursor.fetchall()
         
         return [Alumno(*fila) for fila in filas]
+
 
     @staticmethod
     def cursos_de_alumnos(nombre):
@@ -219,50 +226,72 @@ class Inscripcion:
 def pausa():
     input("\nPresiona ENTER para volver al menu...")
 
-
 def mostrar_banner():
-    banner = pyfiglet.figlet_format("Sistema Colegio")
+    banner=pyfiglet.figlet_format("Sistema de Colegio")
     print(Fore.CYAN + Style.BRIGHT + banner)
-    print(Fore.GREEN + Style.BRIGHT + "Bienvenido al sistema académico\n")
+    print(Fore.RED + Style.BRIGHT +  "Bienvenido al sistema academico\n")
+
+def grafico_inicial():
+    conn = sqlite3.connect("colegio.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT nombre, cupo FROM curso")
+    datos = cursor.fetchall()
+    conn.close()
+    if datos:
+        cursos = [d[0] for d in datos]
+        cupos = [d[1] for d in datos]
+        plt.bar(cursos, cupos, color="skyblue")
+        plt.title("Cupos disponibles por curso")
+        plt.xlabel("Curso")
+        plt.xlabel("Cupo")
+        plt.xticks(rotation=45, ha="right")
+        for i, v in enumerate(cupos):
+            plt.text(i, v + 0.5, str(v), ha="center")
+        
+        plt.tight_layout()
+        plt.show()
+    else:
+        print(Fore.YELLOW + "No hay cursos registrados aun.\n")
+
+def menu_principal():
+    while True:
+        print(Fore.YELLOW + Style.BRIGHT + "------ MENÚ PRINCIPAL ------")
+        print(Fore.CYAN + "1) Registrar alumno")
+        print(Fore.CYAN + "2) Listar alumnos")
+        print(Fore.CYAN + "3) Registrar curso")
+        print(Fore.CYAN + "4) Listar cursos")
+        print(Fore.CYAN + "5) Inscribir alumno en curso")
+        print(Fore.CYAN + "6) Mostrar notas de un alumno")
+        print(Fore.CYAN + "7) Mostrar alumnos de un curso")
+        print(Fore.CYAN + "8) Mostrar cursos de un alumno")
+        print(Fore.CYAN + "9) Reporte: nota más alta por curso")
+        print(Fore.CYAN + "10) Actualizar nota de alumno en un curso")
+        print(Fore.CYAN + "11) Promedio de notas por curso")
+        print(Fore.CYAN + "12) Alumno con mejor promedio")
+        print(Fore.RED + Style.BRIGHT + "0) Salir")
+
+        opcion = input(Fore.YELLOW + "Elige una opción: ").strip()
+        if opcion == "0":
+            print(Fore.RED + "Saliendo del sistema...")
+            break
+
+        if opcion == "1":
+            nombre = input("Nombre: ").strip()
+            edad = int(input("Edad: ").strip())
+            a = Alumno(None, nombre, edad)
+            a.registrar()
+            print("Alumno registrado.")
+            pausa()
 
 
-if __name__ == "__main__":
-    def menu_principal():
-        while True:
-            print(Fore.YELLOW + "------ MENÚ PRINCIPAL ------")
-            print(Fore.CYAN + "1) Registrar alumno")
-            print(Fore.CYAN + "2) Listar alumnos")
-            print(Fore.CYAN + "3) Registrar curso")
-            print(Fore.CYAN + "4) Listar cursos")
-            print(Fore.CYAN + "5) Inscribir alumno en curso")
-            print(Fore.CYAN + "6) Mostrar notas de un alumno")
-            print(Fore.CYAN + "7) Mostrar alumnos de un curso")
-            print(Fore.CYAN + "8) Mostrar cursos de un alumno")
-            print(Fore.CYAN + "9) Reporte: nota más alta por curso")
-            print(Fore.CYAN + "10) Actualizar nota de alumno en un curso")
-            print(Fore.CYAN + "11) Promedio de notas por curso")
-            print(Fore.CYAN + "12) Alumno con mejor promedio")
-            print(Fore.RED + "0) Salir")
-
-            opcion = input(Fore.YELLOW + "Elige una opción: ").strip()
-
-            if opcion == "1":
-                nombre = input("Nombre: ").strip()
-                edad = int(input("Edad: ").strip())
-                a = Alumno(None, nombre, edad)
-                a.registrar()
-                print("Alumno registrado.")
-                pausa()
-
-
-            elif opcion == "2":
+        elif opcion == "2":
                 alumnos = Alumno.obtener_todos()
                 for a in alumnos:
                     print(a.id, a.nombre, a.edad)
                 pausa()
 
 
-            elif opcion == "3":
+        elif opcion == "3":
                 nombre = input("Nombre del curso: ").strip()
                 profesor = input("Profesor: ").strip()
                 cupo = int(input("Cupo: ").strip())
@@ -272,7 +301,7 @@ if __name__ == "__main__":
                 pausa()
 
 
-            elif opcion == "4":
+        elif opcion == "4":
                 conn = sqlite3.connect("colegio.db")
                 cursor = conn.cursor()
                 cursor.execute("SELECT id, nombre, profesor, cupo FROM curso")
@@ -287,7 +316,7 @@ if __name__ == "__main__":
                 pausa()
 
 
-            elif opcion == "5":
+        elif opcion == "5":
                 alumno_id = int(input("ID del alumno: ").strip())
                 curso_id = int(input("ID del curso: ").strip())
                 nota = int(input("Nota: ").strip())
@@ -297,14 +326,14 @@ if __name__ == "__main__":
                 pausa()
 
 
-            elif opcion == "6":
+        elif opcion == "6":
                 nombre = input("Nombre del alumno: ").strip()
                 notas = Inscripcion.notas_por_nombre(nombre)
                 print("Notas de", nombre, ":", notas)
                 pausa()
 
 
-            elif opcion == "7":
+        elif opcion == "7":
                 curso_id = int(input("ID del curso: ").strip())
                 alumnos = Inscripcion.alumnos_en_curso(curso_id)
                 for a in alumnos:
@@ -312,7 +341,7 @@ if __name__ == "__main__":
                 pausa()
 
 
-            elif opcion == "8":
+        elif opcion == "8":
                 nombre = input("Nombre del alumno: ").strip()
                 cursos = Inscripcion.cursos_de_alumnos(nombre)
                 for c in cursos:
@@ -320,14 +349,14 @@ if __name__ == "__main__":
                 pausa()
 
 
-            elif opcion == "9":
+        elif opcion == "9":
                 reporte = Inscripcion.nota_mas_alta_por_curso()
                 for r in reporte:
                     print("Curso:", r[0], "- Nota más alta:", r[1])
                 pausa()
 
 
-            elif opcion == "10":
+        elif opcion == "10":
                 alumno_id = int(input("ID del alumno: ").strip())
                 curso_id = int(input("ID del curso: ").strip())
                 nueva_nota = int(input("Nueva nota: ").strip())
@@ -336,12 +365,12 @@ if __name__ == "__main__":
                 pausa()
 
 
-            elif opcion == "11":
+        elif opcion == "11":
                 for nombre_curso, promedio in Inscripcion.promedio_notas_por_curso():
                     print(f"Curso: {nombre_curso} - Promedio: {promedio:.2f}")
                 pausa()
 
-            elif opcion == "12":
+        elif opcion == "12":
                 mejor = Inscripcion.mejor_promedio()
                 if mejor:
                     print(f"Alumno: {mejor[0]} - Promedio: {mejor[1]:.2f}")
@@ -350,30 +379,36 @@ if __name__ == "__main__":
                 pausa()
 
 
-            elif opcion == "0":
-                print("Saliendo del sistema...")
-                break
+        elif opcion == "0":
+                print(Fore.RED + "Saliendo del sistema...")
+                break  
 
-            else:
-                print("Opción inválida, intenta de nuevo.")
+        else:
+            print("Opción inválida, intenta de nuevo.")
 
 
-    def safe_execute(query, params=()):
+if __name__ == "__main__":
+    mostrar_banner()
+    grafico_inicial()
+    menu_principal()
+
+def safe_execute(query, params=()):
+    try:
+        conn = sqlite3.connect("colegio.db")
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        conn.commit()
+        result = cursor.fetchall()
+        conn.close()
+        return result
+    except Exception as e:
+        print("Error en la base de datos:", e)
+        return[]
+    
+def pedir_entero(mensaje):
+    while True:
         try:
-            conn = sqlite3.connect("colegio.db")
-            cursor = conn.cursor()
-            cursor.execute(query, params)
-            conn.commit()
-            result = cursor.fetchall()
-            conn.close()
-            return result
-        except Exception as e:
-            print("Error en la base de datos:", e)
-            return[]
-        
-    def pedir_entero(mensaje):
-        while True:
-            try:
-                return int(input(mensaje).strip())
-            except ValueError:
-                print("Por favor ingrese un numero valido.")
+            return int(input(mensaje).strip())
+        except ValueError:
+            print("Por favor ingrese un numero valido.")
+#Final
