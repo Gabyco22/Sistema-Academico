@@ -1,4 +1,37 @@
-# Sistema-Academico
+# Academic Managment System / Sistema Academico
+## English 🇬🇧
+An academic managment system developed in **Python +SQLite**, which allows you to:
+-Register students and courses
+-Enroll students in courses
+-Generate reports (avarages, top students, etc)
+-Visualize data with console graphics and matplotlib
+
+## Features
+-Interactive console menu with colors and ASCII art
+-SQLite database for persistence
+-Automatic reports for grades and courses
+-Initial visualization whit banner and statistics
+
+## Installation
+1. Clone the repository
+   ```bash
+   https://github.com/Gabyco22/Sistema-Academico.git
+2. Install dependencies:
+   pip install -r requirements.txt
+
+## Future Ideas
+- GUI whit Tkinter or PyQt
+- export reports to PDF/Exel
+- Login system for teachers and students
+- Wbe dasboard whit Flask/django
+
+Authot
+-I am Gabriel, a beginner programer eager to learn and grow in this field.
+-My goal is to use my programming skilss to help companies grow
+Currently developing projects in Python and SQL, focus on database visualization, and user experience
+
+## Español 🇪🇸
+   
 Un sistema de gestión académica desarrollado en **Python + SQLite**, que permite:
 - Registrar alumnos y cursos
 - Inscribir alumnos en cursos
